@@ -1,0 +1,86 @@
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+
+dotenv.config();
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'hunaif',
+  database: process.env.DB_NAME || 'calorie_track',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+
+
+pool.getConnection()
+  .then(async (connection) => {
+    console.log('Connected to MySQL Database');
+    
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+      
+    await connection.query(createTableQuery);
+    console.log('Users table ready');
+
+    await connection.query('DROP TABLE IF EXISTS food_master');
+
+    const createFoodMasterTableQuery = `
+      CREATE TABLE IF NOT EXISTS food_master (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        food_name VARCHAR(255) NOT NULL,
+        calories_per_unit FLOAT NOT NULL,
+        food_state VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    await connection.query(createFoodMasterTableQuery);
+    console.log("Food table is ready");
+
+    await connection.query('DROP TABLE IF EXISTS exercise_master');
+
+    const createExerciseMasterTableQuery = `
+      CREATE TABLE IF NOT EXISTS exercise_master (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        exercise_name VARCHAR(255) NOT NULL,
+        unit VARCHAR(50) NOT NULL,
+        calories_burned FLOAT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+      )
+    `;
+    await connection.query(createExerciseMasterTableQuery);
+    console.log("Exercise table is ready");
+
+    const createFoodEntryTableQuery = `
+      CREATE TABLE IF NOT EXISTS food_entries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        food_id INT NOT NULL,
+        quantity FLOAT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY(food_id) REFERENCES food_master(id) ON DELETE CASCADE
+      )
+    `;
+    await connection.query(createFoodEntryTableQuery);
+    console.log("Food Entries table is ready");
+
+    connection.release();
+  })
+  .catch((err) => {
+    console.log('MySQL Database connection error:', err);
+  });
+
+export default pool;

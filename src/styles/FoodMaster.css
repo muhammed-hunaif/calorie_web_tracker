@@ -1,0 +1,171 @@
+
+
+
+.food-master-container {
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.add-food-btn {
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #317ac9;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.add-food-btn:hover {
+  background-color: #0056b3;
+}
+
+.food-form-container {
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin-top: 20px;
+  max-width: 400px;
+  border-radius: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,.25);
+}
+
+.radio-group {
+  display: flex;
+  gap: 15px;
+}
+
+.radio-group label {
+  cursor: pointer;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.save-btn {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+
+/* Table Styles */
+.food-table-container {
+  margin-top: 30px;
+}
+
+.food-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+
+}
+
+.food-table th, .food-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.food-table th {
+  background-color: #f4f6f8;
+  font-weight: bold;
+  color: #333;
+}
+
+.food-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* Action Buttons */
+.edit-btn, .delete-btn {
+  padding: 6px 12px;
+  margin-right: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.edit-btn:hover {
+  opacity: 0.8;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
+
+
+
+
+
+
+
+  
