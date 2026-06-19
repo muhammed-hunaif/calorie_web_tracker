@@ -3,13 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom
 import Sign from "./pages/Sign";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard"
-import Navbar from "./pages/Navbar";
 import Sidebar from "./pages/Sidebar";
 import ExerciseEntry from "./pages/ExerciseEntry";
 import FoodEntry from "./pages/FoodEntry";
 import ExerciseMaster from "./pages/ExerciseMaster";
 import FoodMaster from "./pages/FoodMaster";
 import Report from "./pages/Report";
+import ReportView from "./pages/ReportView";
 
 import "./styles/Dashboard.css";
 
@@ -18,7 +18,6 @@ const Layout = () => {
     <div className="dashboard-layout">
       <Sidebar />
       <div className="dashboard-main">
-        <Navbar />
         <div className="dashboard-content">
           <Outlet />
         </div>
@@ -42,6 +41,7 @@ function App() {
           <Route path="/ExerciseMaster" element={<ExerciseMaster/>} />
           <Route path="/FoodMaster" element={<FoodMaster/>} />
           <Route path="/Report" element={<Report/>} />
+          <Route path="/ReportView/:date" element={<ReportView/>} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -50,7 +50,7 @@ export const updateFoodEntry = async (req, res) => {
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Food entry not found' });
-        }
+ }
 
         res.status(200).json({ message: 'Food entry updated successfully' });
     } catch (error) {

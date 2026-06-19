@@ -35,7 +35,7 @@ pool.getConnection()
     await connection.query(createTableQuery);
     console.log('Users table ready');
 
-    await connection.query('DROP TABLE IF EXISTS food_master');
+
 
     const createFoodMasterTableQuery = `
       CREATE TABLE IF NOT EXISTS food_master (
@@ -49,7 +49,7 @@ pool.getConnection()
     await connection.query(createFoodMasterTableQuery);
     console.log("Food table is ready");
 
-    await connection.query('DROP TABLE IF EXISTS exercise_master');
+
 
     const createExerciseMasterTableQuery = `
       CREATE TABLE IF NOT EXISTS exercise_master (
@@ -76,6 +76,18 @@ pool.getConnection()
     `;
     await connection.query(createFoodEntryTableQuery);
     console.log("Food Entries table is ready");
+
+    const createExerciseEntryTableQuery = `
+      CREATE TABLE IF NOT EXISTS exercise_entries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        exercise_id INT NOT NULL,
+        duration FLOAT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(exercise_id) REFERENCES exercise_master(id) ON DELETE CASCADE
+      )
+    `;
+    await connection.query(createExerciseEntryTableQuery);
+    console.log("Exercise Entries table is ready");
 
     connection.release();
   })

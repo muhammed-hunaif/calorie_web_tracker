@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import '../styles/FoodEntry.css';
 
 const FoodEntry = () => {
     const [foodData, setFoodData] = useState([]);
     const [entries, setEntries] = useState([]);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get('page')) || 1;
+    const limit = 10;
+
+    const handlePageChange = (newPage) => {
+        const params = { page: newPage };
+        setSearchParams(params);
+    };
+
+    const totalPages = Math.ceil(entries.length / limit);
+    const startIndex = (currentPage - 1) * limit;
+    const paginatedEntries = entries.slice(startIndex, startIndex + limit);
 
     const formatDate = (dateObj) => {
         const d = String(dateObj.getDate()).padStart(2, '0');
@@ -14,19 +28,10 @@ const FoodEntry = () => {
     };
 
     // Form state
-    const [date, setDate] = useState(formatDate(new Date()));
+    const [date] = useState(formatDate(new Date()));
     const [selectedFoodId, setSelectedFoodId] = useState('');
     const [quantity, setQuantity] = useState('');
     const [measure, setMeasure] = useState('');
-
-    useEffect(() => {
-        const food = foodData.find(f => f.id === parseInt(selectedFoodId));
-        if (food) {
-            setMeasure(food.food_state || '');
-        } else {
-            setMeasure('');
-        }
-    }, [selectedFoodId, foodData]);
 
     // State for editing
     const [editEntryId, setEditEntryId] = useState(null);
@@ -46,6 +51,7 @@ const FoodEntry = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
     }, []);
 
@@ -72,6 +78,7 @@ const FoodEntry = () => {
             alert('Entry saved successfully!');
             setSelectedFoodId('');
             setQuantity('');
+            setMeasure('');
             fetchData();
         } catch (error) {
             console.error('Error saving entry:', error);
@@ -82,6 +89,7 @@ const FoodEntry = () => {
     const handleCancelForm = () => {
         setSelectedFoodId('');
         setQuantity('');
+        setMeasure('');
     };
 
     // Start editing an entry
@@ -123,6 +131,7 @@ const FoodEntry = () => {
         try {
             await axios.delete(`http://localhost:5000/api/foodentry/delete/${entryId}`);
             fetchData();
+            alert('Entry deleted successfully!');
         } catch (error) {
             console.error('Error deleting entry:', error);
             alert('Failed to delete entry');
@@ -138,7 +147,16 @@ const FoodEntry = () => {
                     <label>Food</label>
                     <select
                         value={selectedFoodId}
-                        onChange={(e) => setSelectedFoodId(e.target.value)}
+                        onChange={(e) => {
+                            const newId = e.target.value;
+                            setSelectedFoodId(newId);
+                            const food = foodData.find(f => f.id === parseInt(newId));
+                            if (food) {
+                                setMeasure(food.food_state || '');
+                            } else {
+                                setMeasure('');
+                            }
+                        }}
                     >
                         <option value="">Select Food</option>
                         {foodData.map(food => (
@@ -179,11 +197,9 @@ const FoodEntry = () => {
                                     onChange={(e) => setMeasure(e.target.value)}
                                     className="form-input capitalize"
                                 >
-                                    <option value="">Select Measure</option>
-                                    <option value="kg">kg</option>
+                                    <option value=""> Measure</option>
                                     <option value="g">g</option>
                                     <option value="ml">ml</option>
-                                    <option value="l">l</option>
                                     <option value="P">P</option>
                                 </select>
                             </div>
@@ -223,7 +239,7 @@ const FoodEntry = () => {
                     <table className="food-table">
                         <thead>
                             <tr>
-                                <th>Dateww</th>
+                                <th>Date</th>
                                 <th>Food Name</th>
                                 <th>Calories</th>
                                 <th>State</th>
@@ -232,7 +248,7 @@ const FoodEntry = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {entries.map((entry) => (
+                            {paginatedEntries.map((entry) => (
                                 <tr key={entry.id}>
                                     <td>{new Date(entry.created_at).toLocaleDateString()}</td>
                                     <td>{entry.food_name}</td>
@@ -270,6 +286,26 @@ const FoodEntry = () => {
                     </table>
                 ) : (
                     <p className="no-data">No entries saved yet.</p>
+                )}
+
+                {entries.length > 0 && (
+                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
+                        <button 
+                            disabled={currentPage === 1} 
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            style={{ padding: '8px 16px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                        >
+                            Previous
+                        </button>
+                        <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1}</span>
+                        <button 
+                            disabled={currentPage === totalPages || totalPages === 0} 
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            style={{ padding: '8px 16px', cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}
+                        >
+                            Next
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useSearchParams } from 'react-router-dom';
 import '../styles/FoodMaster.css';
 
 const foodSchema = z.object({
@@ -15,6 +16,19 @@ const FoodMaster = () => {
   const [showForm, setShowForm] = useState(false);
   const [foods, setFoods] = useState([]);
   const [editId, setEditId] = useState(null);
+  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page')) || 1;
+  const limit = 10;
+
+  const handlePageChange = (newPage) => {
+    const params = { page: newPage };
+    setSearchParams(params);
+  };
+
+  const totalPages = Math.ceil(foods.length / limit);
+  const startIndex = (currentPage - 1) * limit;
+  const paginatedFoods = foods.slice(startIndex, startIndex + limit);
 
   const {
     register,
@@ -191,14 +205,14 @@ const FoodMaster = () => {
             <tr>
               <th>ID</th>
               <th>Food Name</th>
-              <th>Calories/Unit</th>
+              <th>Calories</th>
               <th>State</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {foods.length > 0 ? (
-              foods.map((food) => (
+            {paginatedFoods.length > 0 ? (
+              paginatedFoods.map((food) => (
                 <tr key={food.id}>
                   <td>{food.id}</td>
                   <td>{food.food_name}</td>
@@ -218,6 +232,26 @@ const FoodMaster = () => {
           </tbody>
         </table>
       </div>
+
+      {foods.length > 0 && (
+        <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => handlePageChange(currentPage - 1)}
+            style={{ padding: '8px 16px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            Previous
+          </button>
+          <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1}</span>
+          <button 
+            disabled={currentPage === totalPages || totalPages === 0} 
+            onClick={() => handlePageChange(currentPage + 1)}
+            style={{ padding: '8px 16px', cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}
+          >
+            Next
+          </button>
+        </div>
+      )}
 
     </div>
   );

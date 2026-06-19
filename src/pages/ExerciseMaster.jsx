@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useSearchParams } from 'react-router-dom';
 import '../styles/ExerciseMaster.css';
 
 const exerciseSchema = z.object({
@@ -15,6 +16,19 @@ const ExerciseMaster = () => {
   const [showForm, setShowForm] = useState(false);
   const [exercises, setExercises] = useState([]);
   const [editId, setEditId] = useState(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page')) || 1;
+  const limit = 10;
+
+  const handlePageChange = (newPage) => {
+    const params = { page: newPage };
+    setSearchParams(params);
+  };
+
+  const totalPages = Math.ceil(exercises.length / limit);
+  const startIndex = (currentPage - 1) * limit;
+  const paginatedExercises = exercises.slice(startIndex, startIndex + limit);
 
   const {
     register,
@@ -100,9 +114,9 @@ const ExerciseMaster = () => {
   return (
     <div className="exercise-master-container">
       <h1>Exercise Master</h1>
-      
+
       {!showForm ? (
-        <button 
+        <button
           onClick={() => {
             setEditId(null);
             reset();
@@ -116,8 +130,8 @@ const ExerciseMaster = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="exercise-form-container">
           <div className="form-group">
             <label className="form-label">Exercise Name:</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               {...register('exerciseName')}
               className="form-input"
               placeholder="Enter exercise name"
@@ -127,7 +141,7 @@ const ExerciseMaster = () => {
 
           <div className="form-group">
             <label className="form-label">Unit:</label>
-            <select 
+            <select
               {...register('unit')}
               className="form-select"
             >
@@ -141,8 +155,8 @@ const ExerciseMaster = () => {
 
           <div className="form-group">
             <label className="form-label">Calories Burned:</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               {...register('caloriesBurned')}
               className="form-input"
               placeholder="Enter calories burned"
@@ -151,13 +165,13 @@ const ExerciseMaster = () => {
           </div>
 
           <div className="button-group">
-            <button 
+            <button
               type="submit"
               className="save-btn"
             >
               {editId ? 'Update' : 'Save'}
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleCancel}
               className="cancel-btn"
@@ -181,8 +195,8 @@ const ExerciseMaster = () => {
             </tr>
           </thead>
           <tbody>
-            {exercises.length > 0 ? (
-              exercises.map((exercise) => (
+            {paginatedExercises.length > 0 ? (
+              paginatedExercises.map((exercise) => (
                 <tr key={exercise.id}>
                   <td>{exercise.id}</td>
                   <td>{exercise.exercise_name}</td>
@@ -202,7 +216,27 @@ const ExerciseMaster = () => {
           </tbody>
         </table>
       </div>
-     
+
+      {exercises.length > 0 && (
+        <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => handlePageChange(currentPage - 1)}
+            style={{ padding: '8px 16px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            Previous
+          </button>
+          <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1}</span>
+          <button 
+            disabled={currentPage === totalPages || totalPages === 0} 
+            onClick={() => handlePageChange(currentPage + 1)}
+            style={{ padding: '8px 16px', cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };
