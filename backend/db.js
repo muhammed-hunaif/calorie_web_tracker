@@ -69,7 +69,6 @@ pool.getConnection()
     const createFoodEntryTableQuery = `
       CREATE TABLE IF NOT EXISTS food_entries (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
         food_id INT NOT NULL,
         quantity FLOAT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

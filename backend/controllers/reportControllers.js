@@ -29,6 +29,7 @@ export const getReports = async (req, res) => {
         }
 
         foodQuery += ` GROUP BY DATE(fe.created_at)`;
+        // foodQuery = foodQuery + ` GROUP BY DATE(fe.created_at)`;
         exerciseQuery += ` GROUP BY DATE(ee.created_at)`;
 
         const [foodResults] = await pool.query(foodQuery, queryParams);
