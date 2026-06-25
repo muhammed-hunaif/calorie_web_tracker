@@ -57,7 +57,7 @@ const ReportView = () => {
                       {detailedData.foods.map((food) => (
                         <tr key={food.id}>
                           <td className="item-name">{food.food_name}</td>
-                          <td className="item-qty">{food.quantity}</td>
+                          <td className="item-qty">{food.quantity} pieces</td>
                           <td className="item-cals">{food.total_calories}</td>
                         </tr>
                       ))}
@@ -88,7 +88,7 @@ const ReportView = () => {
                   <p className="no-data-msg">No exercises recorded.</p>
                 )}
               </div>
-            </div>
+            </div>   
           </div>
         </div>
       ) : (

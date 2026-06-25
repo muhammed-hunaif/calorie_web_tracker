@@ -10,7 +10,7 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token,
-        process.env.JWT_SECRET || 'secretkey');
+         process.env.JWT_SECRET || 'secretkey');
 
     if (!decoded) {
       return res.status(401).json({ error: 'Unauthorized - Invalid Token' });

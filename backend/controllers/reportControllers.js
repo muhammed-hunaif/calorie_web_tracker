@@ -61,7 +61,8 @@ export const getReports = async (req, res) => {
         });
 
         // Convert map to array and sort by date descending
-        const reports = Object.values(reportMap).sort((a, b) => new Date(b.date) - new Date(a.date));
+        const reports = Object.values(reportMap).sort((a, b) => 
+            new Date(b.date) - new Date(a.date));
 
         res.json(reports);
     } catch (error) {

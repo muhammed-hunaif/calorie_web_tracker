@@ -11,8 +11,11 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || 'hunaif',
   database: process.env.DB_NAME || 'calorie_track',
   waitForConnections: true,
+  // 11th request waits.
   connectionLimit: 10,
+  // 10 connections at the same time.
   queueLimit: 0
+// Unlimited waiting queue..
 });
 
 

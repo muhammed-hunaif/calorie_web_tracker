@@ -22,6 +22,8 @@ const FoodEntry = () => {
 
     const formatDate = (dateObj) => {
         const d = String(dateObj.getDate()).padStart(2, '0');
+        // with padstart=05-06-2026
+        // without padstart=5-6-2026
         const m = String(dateObj.getMonth() + 1).padStart(2, '0');
         const y = dateObj.getFullYear();
         return `${d}-${m}-${y}`;
