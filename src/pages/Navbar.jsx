@@ -1,12 +1,12 @@
 
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 import '../styles/Navbar.css';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const handleLogout = () => {
-        axios.post('/api/auth/logout')
+        api.post('/auth/logout')
             .then(() => {
                 alert("Logged out successfully!");
                 navigate("/Login");

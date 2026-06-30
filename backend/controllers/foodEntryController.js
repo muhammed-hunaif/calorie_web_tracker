@@ -3,14 +3,19 @@ import pool from '../db.js';
 // create
 export const addFoodEntry = async (req, res) => {
     const { foodId, quantity } = req.body;
-
-    if (!foodId || !quantity) {
-        return res.status(400).json({ message: 'Food ID and quantity are required' });
-    }
+    const userId = req.user.id;
 
     try {
-        const query = 'INSERT INTO food_entries (food_id, quantity) VALUES (?, ?)';
-        const [result] = await pool.query(query, [foodId, quantity]);
+        const [foodCheck] = await pool.query(
+            'SELECT id FROM food_master WHERE id = ? AND user_id = ?',
+            [foodId, userId]
+        );
+        if (foodCheck.length === 0) {
+            return res.status(404).json({ message: 'Food item not found' });
+        }
+
+        const query = 'INSERT INTO food_entries (user_id, food_id, quantity) VALUES (?, ?, ?)';
+        const [result] = await pool.query(query, [userId, foodId, quantity]);
         res.status(201).json({ message: 'Food entry saved successfully', id: result.insertId });
     } catch (error) {
         console.error('Error adding food entry:', error);
@@ -20,14 +25,17 @@ export const addFoodEntry = async (req, res) => {
 
 // read
 export const getFoodEntries = async (req, res) => {
+    const userId = req.user.id;
+
     try {
         const query = `
             SELECT fe.id, fe.food_id, fe.quantity, fe.created_at, fm.food_name, fm.calories_per_unit, fm.food_state
             FROM food_entries fe
             JOIN food_master fm ON fe.food_id = fm.id
+            WHERE fe.user_id = ?
             ORDER BY fe.created_at DESC
         `;
-        const [entries] = await pool.query(query);
+        const [entries] = await pool.query(query, [userId]);
         res.status(200).json(entries);
     } catch (error) {
         console.error('Error fetching food entries:', error);
@@ -39,18 +47,15 @@ export const getFoodEntries = async (req, res) => {
 export const updateFoodEntry = async (req, res) => {
     const { id } = req.params;
     const { quantity } = req.body;
-
-    if (!quantity) {
-        return res.status(400).json({ message: 'Quantity is required' });
-    }
+    const userId = req.user.id;
 
     try {
-        const query = 'UPDATE food_entries SET quantity = ? WHERE id = ?';
-        const [result] = await pool.query(query, [quantity, id]);
+        const query = 'UPDATE food_entries SET quantity = ? WHERE id = ? AND user_id = ?';
+        const [result] = await pool.query(query, [quantity, id, userId]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Food entry not found' });
- }
+        }
 
         res.status(200).json({ message: 'Food entry updated successfully' });
     } catch (error) {
@@ -62,10 +67,11 @@ export const updateFoodEntry = async (req, res) => {
 // delete
 export const deleteFoodEntry = async (req, res) => {
     const { id } = req.params;
+    const userId = req.user.id;
 
     try {
-        const query = 'DELETE FROM food_entries WHERE id = ?';
-        const [result] = await pool.query(query, [id]);
+        const query = 'DELETE FROM food_entries WHERE id = ? AND user_id = ?';
+        const [result] = await pool.query(query, [id, userId]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Food entry not found' });

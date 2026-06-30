@@ -10,6 +10,7 @@ import ExerciseMaster from "./pages/ExerciseMaster";
 import FoodMaster from "./pages/FoodMaster";
 import Report from "./pages/Report";
 import ReportView from "./pages/ReportView";
+import ProtectedRoute from "./pages/ProtectedRoute";
 
 import "./styles/Dashboard.css";
 
@@ -33,15 +34,18 @@ function App() {
         <Route path="/" element={<Navigate to="/Login" replace />} />
         <Route path="/Sign" element={<Sign />} />
         <Route path="/Login" element={<Login />} />
-        
-        <Route element={<Layout />}>
-          <Route path="/Dashboard" element={<Dashboard/>} />
-          <Route path="/ExerciseEntry" element={<ExerciseEntry/>} />
-          <Route path="/FoodEntry" element={<FoodEntry/>} />
-          <Route path="/ExerciseMaster" element={<ExerciseMaster/>} />
-          <Route path="/FoodMaster" element={<FoodMaster/>} />
-          <Route path="/Report" element={<Report/>} />
-          <Route path="/ReportView/:date" element={<ReportView/>} />
+
+        {/* Protected routes — requires authentication */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/Dashboard" element={<Dashboard />} />
+            <Route path="/ExerciseEntry" element={<ExerciseEntry />} />
+            <Route path="/FoodEntry" element={<FoodEntry />} />
+            <Route path="/ExerciseMaster" element={<ExerciseMaster />} />
+            <Route path="/FoodMaster" element={<FoodMaster />} />
+            <Route path="/Report" element={<Report />} />
+            <Route path="/ReportView/:date" element={<ReportView />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
@@ -49,3 +53,4 @@ function App() {
 }
 
 export default App;
+

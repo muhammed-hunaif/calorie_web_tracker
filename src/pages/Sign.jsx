@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios";
+import api from "../api/axios";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/sign.css";
 
@@ -27,9 +27,7 @@ const Sign = () => {
     const onSubmit = async (data) => {
         try {
             setServerError("");
-            const response = await axios.post("/api/auth/signup", data, {
-                withCredentials: true,
-            });
+            const response = await api.post("/auth/signup", data);
             if (response.data) {
                 navigate("/Login");
             }

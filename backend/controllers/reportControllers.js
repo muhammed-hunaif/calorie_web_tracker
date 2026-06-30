@@ -1,6 +1,8 @@
 import pool from '../db.js';
 
 export const getReports = async (req, res) => {
+    const userId = req.user.id;
+
     try {
         const { fromDate, toDate } = req.query;
         
@@ -10,6 +12,7 @@ export const getReports = async (req, res) => {
                 SUM(fe.quantity * fm.calories_per_unit) as totalConsumed
             FROM food_entries fe
             JOIN food_master fm ON fe.food_id = fm.id
+            WHERE fe.user_id = ?
         `;
 
         let exerciseQuery = `
@@ -18,22 +21,24 @@ export const getReports = async (req, res) => {
                 SUM(ee.duration * em.calories_burned) as totalBurned
             FROM exercise_entries ee
             JOIN exercise_master em ON ee.exercise_id = em.id
+            WHERE ee.user_id = ?
         `;
 
-        const queryParams = [];
+        const foodParams = [userId];
+        const exerciseParams = [userId];
 
         if (fromDate && toDate) {
-            foodQuery += ` WHERE DATE(fe.created_at) >= ? AND DATE(fe.created_at) <= ?`;
-            exerciseQuery += ` WHERE DATE(ee.created_at) >= ? AND DATE(ee.created_at) <= ?`;
-            queryParams.push(fromDate, toDate);
+            foodQuery += ` AND DATE(fe.created_at) >= ? AND DATE(fe.created_at) <= ?`;
+            exerciseQuery += ` AND DATE(ee.created_at) >= ? AND DATE(ee.created_at) <= ?`;
+            foodParams.push(fromDate, toDate);
+            exerciseParams.push(fromDate, toDate);
         }
 
         foodQuery += ` GROUP BY DATE(fe.created_at)`;
-        // foodQuery = foodQuery + ` GROUP BY DATE(fe.created_at)`;
         exerciseQuery += ` GROUP BY DATE(ee.created_at)`;
 
-        const [foodResults] = await pool.query(foodQuery, queryParams);
-        const [exerciseResults] = await pool.query(exerciseQuery, queryParams);
+        const [foodResults] = await pool.query(foodQuery, foodParams);
+        const [exerciseResults] = await pool.query(exerciseQuery, exerciseParams);
 
         const reportMap = {};
 

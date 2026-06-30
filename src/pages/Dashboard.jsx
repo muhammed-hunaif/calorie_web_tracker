@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
@@ -12,9 +12,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/dashboard', {
-          withCredentials: true
-        });
+        const response = await api.get('/dashboard');
         setDashboardData(response.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);

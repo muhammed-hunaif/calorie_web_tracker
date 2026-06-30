@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -47,7 +47,7 @@ const ExerciseMaster = () => {
 
   const fetchExercises = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/exercisemaster');
+      const response = await api.get('/exercisemaster');
       setExercises(response.data);
     } catch (error) {
       console.error('Error fetching exercises:', error);
@@ -61,12 +61,12 @@ const ExerciseMaster = () => {
   const onSubmit = async (data) => {
     try {
       if (editId) {
-        const response = await axios.put(`http://localhost:5000/api/exercisemaster/update/${editId}`, data);
+        const response = await api.put(`/exercisemaster/update/${editId}`, data);
         if (response.status === 200) {
           alert('Exercise updated successfully!');
         }
       } else {
-        const response = await axios.post('http://localhost:5000/api/exercisemaster/add', data);
+        const response = await api.post('/exercisemaster/add', data);
         if (response.status === 201 || response.status === 200) {
           alert('Exercise added successfully!');
         }
@@ -93,7 +93,7 @@ const ExerciseMaster = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this exercise?')) {
       try {
-        const response = await axios.delete(`http://localhost:5000/api/exercisemaster/delete/${id}`);
+        const response = await api.delete(`/exercisemaster/delete/${id}`);
         if (response.status === 200) {
           alert('Exercise deleted successfully!');
           fetchExercises();

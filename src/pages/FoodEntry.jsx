@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/FoodEntry.css';
 
@@ -42,8 +42,8 @@ const FoodEntry = () => {
     const fetchData = async () => {
         try {
             const [foodRes, entriesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/foodmaster'),
-                axios.get('http://localhost:5000/api/foodentry')
+                api.get('/foodmaster'),
+                api.get('/foodentry')
             ]);
             setFoodData(foodRes.data);
             setEntries(entriesRes.data);
@@ -73,7 +73,7 @@ const FoodEntry = () => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/foodentry/add', {
+            await api.post('/foodentry/add', {
                 foodId: selectedFoodId,
                 quantity: quantity
             });
@@ -114,7 +114,7 @@ const FoodEntry = () => {
         }
 
         try {
-            await axios.put(`http://localhost:5000/api/foodentry/update/${entryId}`, {
+            await api.put(`/foodentry/update/${entryId}`, {
                 quantity: editQuantity
             });
             alert('Entry updated successfully!');
@@ -131,7 +131,7 @@ const FoodEntry = () => {
         if (!window.confirm('Are you sure you want to delete this entry?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/foodentry/delete/${entryId}`);
+            await api.delete(`/foodentry/delete/${entryId}`);
             fetchData();
             alert('Entry deleted successfully!');
         } catch (error) {

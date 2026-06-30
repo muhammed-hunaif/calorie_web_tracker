@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/ExerciseEntry.css';
 
@@ -40,8 +40,8 @@ const ExerciseEntry = () => {
     const fetchData = async () => {
         try {
             const [exerciseRes, entriesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/exercisemaster'),
-                axios.get('http://localhost:5000/api/exerciseentry')
+                api.get('/exercisemaster'),
+                api.get('/exerciseentry')
             ]);
             setExerciseData(exerciseRes.data);
             setEntries(entriesRes.data);
@@ -71,7 +71,7 @@ const ExerciseEntry = () => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/exerciseentry/add', {
+            await api.post('/exerciseentry/add', {
                 exerciseId: selectedExerciseId,
                 duration: duration
             });
@@ -112,7 +112,7 @@ const ExerciseEntry = () => {
         }
 
         try {
-            await axios.put(`http://localhost:5000/api/exerciseentry/update/${entryId}`, {
+            await api.put(`/exerciseentry/update/${entryId}`, {
                 duration: editDuration
             });
             alert('Entry updated successfully!');
@@ -129,7 +129,7 @@ const ExerciseEntry = () => {
         if (!window.confirm('Are you sure you want to delete this entry?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/exerciseentry/delete/${entryId}`);
+            await api.delete(`/exerciseentry/delete/${entryId}`);
             fetchData();
             alert('Entry deleted successfully!');
         } catch (error) {

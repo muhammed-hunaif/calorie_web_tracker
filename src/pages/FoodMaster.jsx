@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -47,7 +47,7 @@ const FoodMaster = () => {
 
   const fetchFoods = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/foodmaster');
+      const response = await api.get('/foodmaster');
       setFoods(response.data);
     } catch (error) {
       console.error('Error fetching foods:', error);
@@ -61,12 +61,12 @@ const FoodMaster = () => {
   const onSubmit = async (data) => {
     try {
       if (editId) {
-        const response = await axios.put(`http://localhost:5000/api/foodmaster/update/${editId}`, data);
+        const response = await api.put(`/foodmaster/update/${editId}`, data);
         if (response.status === 200) {
           alert('Food updated successfully!');
         }
       } else {
-        const response = await axios.post('http://localhost:5000/api/foodmaster/add', data);
+        const response = await api.post('/foodmaster/add', data);
         if (response.status === 201 || response.status === 200) {
           alert('Food added successfully!');
         }
@@ -93,7 +93,7 @@ const FoodMaster = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this food?')) {
       try {
-        const response = await axios.delete(`http://localhost:5000/api/foodmaster/delete/${id}`);
+        const response = await api.delete(`/foodmaster/delete/${id}`);
         if (response.status === 200) {
           alert('Food deleted successfully!');
           fetchFoods();

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 import '../styles/Report.css';
 
 const Report = () => {
@@ -22,7 +22,7 @@ const Report = () => {
         params.fromDate = start;
         params.toDate = end;
       }
-      const response = await axios.get(`http://localhost:5000/api/reports`, { params });
+      const response = await api.get('/reports', { params });
       setReports(response.data);
     } catch (error) {
       console.error('Error fetching reports:', error);

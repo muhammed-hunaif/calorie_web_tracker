@@ -1,18 +1,22 @@
 import pool from '../db.js';
 
 export const getDashboard = async (req, res) => {
+    const userId = req.user.id;
+
     try {
         const [foodResult] = await pool.query(`
             SELECT SUM(fe.quantity * fm.calories_per_unit) AS totalConsumed
             FROM food_entries fe
             JOIN food_master fm ON fe.food_id = fm.id
-        `);
+            WHERE fe.user_id = ?
+        `, [userId]);
 
         const [exerciseResult] = await pool.query(`
             SELECT SUM(ee.duration * em.calories_burned) AS totalBurned
             FROM exercise_entries ee
             JOIN exercise_master em ON ee.exercise_id = em.id
-        `);
+            WHERE ee.user_id = ?
+        `, [userId]);
 
         const consumed = foodResult[0].totalConsumed || 0;
         const burned = exerciseResult[0].totalBurned || 0;
@@ -30,9 +34,10 @@ export const getDashboard = async (req, res) => {
 };
 
 export const getReportDetails = async (req, res) => {
-    try {
-        const { date } = req.params;
+    const { date } = req.params;
+    const userId = req.user.id;
 
+    try {
         const foodQuery = `
             SELECT 
                 fe.id,
@@ -43,7 +48,7 @@ export const getReportDetails = async (req, res) => {
                 DATE_FORMAT(fe.created_at, '%H:%i') as time
             FROM food_entries fe
             JOIN food_master fm ON fe.food_id = fm.id
-            WHERE DATE(fe.created_at) = ?
+            WHERE DATE(fe.created_at) = ? AND fe.user_id = ?
             ORDER BY fe.created_at ASC
         `;
 
@@ -57,12 +62,12 @@ export const getReportDetails = async (req, res) => {
                 DATE_FORMAT(ee.created_at, '%H:%i') as time
             FROM exercise_entries ee
             JOIN exercise_master em ON ee.exercise_id = em.id
-            WHERE DATE(ee.created_at) = ?
+            WHERE DATE(ee.created_at) = ? AND ee.user_id = ?
             ORDER BY ee.created_at ASC
         `;
 
-        const [foodResults] = await pool.query(foodQuery, [date]);
-        const [exerciseResults] = await pool.query(exerciseQuery, [date]);
+        const [foodResults] = await pool.query(foodQuery, [date, userId]);
+        const [exerciseResults] = await pool.query(exerciseQuery, [date, userId]);
 
         res.json({
             foods: foodResults,

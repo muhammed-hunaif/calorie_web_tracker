@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios";
+import api from "../api/axios";
 import { Link,useNavigate  } from "react-router-dom";
 import "../styles/login.css";
 
@@ -29,9 +29,7 @@ const Login = () => {
     const onSubmit = async (data) => {
         try {
             setServerError("");
-            const response = await axios.post("/api/auth/login", data, {
-                withCredentials: true,
-            });
+            const response = await api.post("/auth/login", data);
             if (response.data) {
                 alert("Logged in successfully!");
                 navigate("/Dashboard");
