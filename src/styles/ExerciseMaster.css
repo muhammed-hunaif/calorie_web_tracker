@@ -160,3 +160,37 @@
 .delete-btn:hover {
   background-color: #c82333;
 }
+/* Image thumbnails and upload preview (ImageKit) */
+.row-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  vertical-align: middle;
+  background: #f1f1f1;
+}
+
+.no-image {
+  color: #999;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.image-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}

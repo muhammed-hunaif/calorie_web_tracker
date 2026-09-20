@@ -6,6 +6,9 @@ import '../styles/ExerciseEntry.css';
 const ExerciseEntry = () => {
     const [exerciseData, setExerciseData] = useState([]);
     const [entries, setEntries] = useState([]);
+    // Pagination is done by the API now; these come from the response envelope.
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const currentPage = parseInt(searchParams.get('page')) || 1;
@@ -15,10 +18,6 @@ const ExerciseEntry = () => {
         const params = { page: newPage };
         setSearchParams(params);
     };
-
-    const totalPages = Math.ceil(entries.length / limit);
-    const startIndex = (currentPage - 1) * limit;
-    const paginatedEntries = entries.slice(startIndex, startIndex + limit);
 
     const formatDate = (dateObj) => {
         const d = String(dateObj.getDate()).padStart(2, '0');
@@ -40,11 +39,19 @@ const ExerciseEntry = () => {
     const fetchData = async () => {
         try {
             const [exerciseRes, entriesRes] = await Promise.all([
-                api.get('/exercisemaster'),
-                api.get('/exerciseentry')
+                // The dropdown needs every exercise, not just the first page.
+                api.get('/exercisemaster', { params: { all: 'true' } }),
+                api.get('/exerciseentry', { params: { page: currentPage, limit } })
             ]);
-            setExerciseData(exerciseRes.data);
-            setEntries(entriesRes.data);
+            setExerciseData(exerciseRes.data.data);
+            setEntries(entriesRes.data.data);
+            setTotal(entriesRes.data.total);
+            setTotalPages(entriesRes.data.totalPages);
+
+            // Deleting the last row of the last page can leave us past the end.
+            if (entriesRes.data.totalPages > 0 && currentPage > entriesRes.data.totalPages) {
+                setSearchParams({ page: entriesRes.data.totalPages });
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -53,7 +60,9 @@ const ExerciseEntry = () => {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
-    }, []);
+        // Refetch whenever the page changes - the server returns that page.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage]);
 
     const selectedExercise = exerciseData.find(e => e.id === parseInt(selectedExerciseId));
 
@@ -71,9 +80,11 @@ const ExerciseEntry = () => {
         }
 
         try {
+            // The <select> and <input> hold strings; the API validates real
+            // numbers, so convert before sending.
             await api.post('/exerciseentry/add', {
-                exerciseId: selectedExerciseId,
-                duration: duration
+                exerciseId: Number(selectedExerciseId),
+                duration: Number(duration)
             });
             alert('Entry saved successfully!');
             setSelectedExerciseId('');
@@ -82,7 +93,7 @@ const ExerciseEntry = () => {
             fetchData();
         } catch (error) {
             console.error('Error saving entry:', error);
-            alert('Failed to save entry');
+            alert(error.response?.data?.message || 'Failed to save entry');
         }
     };
 
@@ -113,14 +124,14 @@ const ExerciseEntry = () => {
 
         try {
             await api.put(`/exerciseentry/update/${entryId}`, {
-                duration: editDuration
+                duration: Number(editDuration)
             });
             alert('Entry updated successfully!');
             setEditEntryId(null);
             fetchData();
         } catch (error) {
             console.error('Error updating entry:', error);
-            alert('Failed to update entry');
+            alert(error.response?.data?.message || 'Failed to update entry');
         }
     };
 
@@ -249,10 +260,20 @@ const ExerciseEntry = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedEntries.map((entry) => (
+                            {entries.map((entry) => (
                                 <tr key={entry.id}>
                                     <td>{new Date(entry.created_at).toLocaleDateString()}</td>
-                                    <td>{entry.exercise_name}</td>
+                                    <td className="name-cell">
+                                        {entry.image_url && (
+                                            <img
+                                                src={`${entry.image_url}?tr=w-40,h-40,fo-auto`}
+                                                alt=""
+                                                className="row-thumb"
+                                                loading="lazy"
+                                            />
+                                        )}
+                                        {entry.exercise_name}
+                                    </td>
                                     <td>{entry.calories_burned}</td>
                                     <td className="capitalize">{entry.unit}</td>
                                     <td>
@@ -289,16 +310,16 @@ const ExerciseEntry = () => {
                     <p className="no-data">No entries saved yet.</p>
                 )}
 
-                {entries.length > 0 && (
+                {total > 0 && (
                     <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
-                        <button 
-                            disabled={currentPage === 1} 
+                        <button
+                            disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
                             style={{ padding: '8px 16px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
                         >
                             Previous
                         </button>
-                        <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1}</span>
+                        <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1} ({total} total)</span>
                         <button 
                             disabled={currentPage === totalPages || totalPages === 0} 
                             onClick={() => handlePageChange(currentPage + 1)}

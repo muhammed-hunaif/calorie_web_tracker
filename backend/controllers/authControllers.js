@@ -2,16 +2,21 @@ import pool from '../db.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+const cookieOptions = {
+  httpOnly: true, // prevents XSS(cross-site scripting)protects the cookie
+  sameSite: 'strict', // CSRF protection(Cross-Site Request Forgery)Other websites cannot send cookie
+  secure: process.env.NODE_ENV === 'production',// Cookie only sent over HTTPS
+  path: '/',
+};
+
 const generateTokenAndSetCookie = (userId, res) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: '15d',
   });
 
   res.cookie('jwt', token, {
+    ...cookieOptions,
     maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
-    httpOnly: true, // prevents XSS(cross-site scripting)protects the cookie
-    sameSite: 'strict', // CSRF protection(Cross-Site Request Forgery)Other websites cannot send cookie
-    secure: process.env.NODE_ENV === 'production',// Cookie only sent over HTTPS
   });
 };
 
@@ -21,7 +26,8 @@ export const signup = async (req, res) => {
 
     const [existingUsers] = await pool.execute('SELECT * FROM users WHERE email = ? OR username = ?', [email, username]);
     if (existingUsers.length > 0) {
-      return res.status(400).json({ error: 'User already exists' });
+      // 409 Conflict: the request is well formed, the resource already exists.
+      return res.status(409).json({ error: 'User already exists' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -79,8 +85,9 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.cookie('jwt', '', { maxAge: 0 });
-    // delete cookie immediately.
+    // Attributes must match the ones used when setting it, otherwise some
+    // browsers keep the original cookie and the session survives logout.
+    res.clearCookie('jwt', cookieOptions);
     res.status(200).json({ message: 'Logged out successfully' });
   } 
   catch (error) {

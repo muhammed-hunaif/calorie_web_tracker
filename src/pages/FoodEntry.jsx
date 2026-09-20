@@ -6,6 +6,9 @@ import '../styles/FoodEntry.css';
 const FoodEntry = () => {
     const [foodData, setFoodData] = useState([]);
     const [entries, setEntries] = useState([]);
+    // Pagination is done by the API now; these come from the response envelope.
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const currentPage = parseInt(searchParams.get('page')) || 1;
@@ -16,10 +19,6 @@ const FoodEntry = () => {
         setSearchParams(params);
     };
 
-    const totalPages = Math.ceil(entries.length / limit);
-    const startIndex = (currentPage - 1) * limit;
-    const paginatedEntries = entries.slice(startIndex, startIndex + limit);
-
     const formatDate = (dateObj) => {
         const d = String(dateObj.getDate()).padStart(2, '0');
         // with padstart=05-06-2026
@@ -29,11 +28,21 @@ const FoodEntry = () => {
         return `${d}-${m}-${y}`;
     };
 
+    // The unit a quantity is counted in follows from the food's state on the
+    // master record - it is never a separate choice at entry time.
+    const unitFor = (foodState) => {
+        switch (String(foodState || '').toLowerCase()) {
+            case 'solid': return 'g';
+            case 'liquid': return 'ml';
+            case 'piece': return 'pc';
+            default: return '';
+        }
+    };
+
     // Form state
     const [date] = useState(formatDate(new Date()));
     const [selectedFoodId, setSelectedFoodId] = useState('');
     const [quantity, setQuantity] = useState('');
-    const [measure, setMeasure] = useState('');
 
     // State for editing
     const [editEntryId, setEditEntryId] = useState(null);
@@ -42,11 +51,19 @@ const FoodEntry = () => {
     const fetchData = async () => {
         try {
             const [foodRes, entriesRes] = await Promise.all([
-                api.get('/foodmaster'),
-                api.get('/foodentry')
+                // The dropdown needs every food, not just the first page.
+                api.get('/foodmaster', { params: { all: 'true' } }),
+                api.get('/foodentry', { params: { page: currentPage, limit } })
             ]);
-            setFoodData(foodRes.data);
-            setEntries(entriesRes.data);
+            setFoodData(foodRes.data.data);
+            setEntries(entriesRes.data.data);
+            setTotal(entriesRes.data.total);
+            setTotalPages(entriesRes.data.totalPages);
+
+            // Deleting the last row of the last page can leave us past the end.
+            if (entriesRes.data.totalPages > 0 && currentPage > entriesRes.data.totalPages) {
+                setSearchParams({ page: entriesRes.data.totalPages });
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -55,10 +72,13 @@ const FoodEntry = () => {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
-    }, []);
+        // Refetch whenever the page changes - the server returns that page.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage]);
 
     const selectedFood = foodData.find(f => f.id === parseInt(selectedFoodId));
 
+    const unit = unitFor(selectedFood?.food_state);
     const caloriesPerUnit = selectedFood ? selectedFood.calories_per_unit : 0;
     const totalCalories = selectedFood && quantity ? caloriesPerUnit * quantity : 0;
 
@@ -73,25 +93,25 @@ const FoodEntry = () => {
         }
 
         try {
+            // The <select> and <input> hold strings; the API validates real
+            // numbers, so convert before sending.
             await api.post('/foodentry/add', {
-                foodId: selectedFoodId,
-                quantity: quantity
+                foodId: Number(selectedFoodId),
+                quantity: Number(quantity)
             });
             alert('Entry saved successfully!');
             setSelectedFoodId('');
             setQuantity('');
-            setMeasure('');
             fetchData();
         } catch (error) {
             console.error('Error saving entry:', error);
-            alert('Failed to save entry');
+            alert(error.response?.data?.message || 'Failed to save entry');
         }
     };
 
     const handleCancelForm = () => {
         setSelectedFoodId('');
         setQuantity('');
-        setMeasure('');
     };
 
     // Start editing an entry
@@ -115,14 +135,14 @@ const FoodEntry = () => {
 
         try {
             await api.put(`/foodentry/update/${entryId}`, {
-                quantity: editQuantity
+                quantity: Number(editQuantity)
             });
             alert('Entry updated successfully!');
             setEditEntryId(null);
             fetchData();
         } catch (error) {
             console.error('Error updating entry:', error);
-            alert('Failed to update entry');
+            alert(error.response?.data?.message || 'Failed to update entry');
         }
     };
 
@@ -149,16 +169,7 @@ const FoodEntry = () => {
                     <label>Food</label>
                     <select
                         value={selectedFoodId}
-                        onChange={(e) => {
-                            const newId = e.target.value;
-                            setSelectedFoodId(newId);
-                            const food = foodData.find(f => f.id === parseInt(newId));
-                            if (food) {
-                                setMeasure(food.food_state || '');
-                            } else {
-                                setMeasure('');
-                            }
-                        }}
+                        onChange={(e) => setSelectedFoodId(e.target.value)}
                     >
                         <option value="">Select Food</option>
                         {foodData.map(food => (
@@ -183,27 +194,25 @@ const FoodEntry = () => {
 
                         <div className="form-row">
                             <div className="form-group half">
-                                <label>Quantity</label>
+                                <label>Quantity{unit && ` (${unit})`}</label>
                                 <input
                                     type="number"
                                     min="0"
                                     value={quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
-                                    placeholder="e.g. 200"
+                                    placeholder={unit === 'pc' ? 'e.g. 2' : 'e.g. 200'}
                                 />
                             </div>
                             <div className="form-group half">
-                                <label>Measure</label>
-                                <select
-                                    value={measure}
-                                    onChange={(e) => setMeasure(e.target.value)}
-                                    className="form-input capitalize"
-                                >
-                                    <option value=""> Measure</option>
-                                    <option value="g">g</option>
-                                    <option value="ml">ml</option>
-                                    <option value="P">P</option>
-                                </select>
+                                <label>Unit</label>
+                                {/* Comes from the food's state on the master record,
+                                    so it cannot disagree with what is stored. */}
+                                <input
+                                    type="text"
+                                    value={unit}
+                                    readOnly
+                                    className="readonly-input"
+                                />
                             </div>
                         </div>
 
@@ -250,10 +259,20 @@ const FoodEntry = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedEntries.map((entry) => (
+                            {entries.map((entry) => (
                                 <tr key={entry.id}>
                                     <td>{new Date(entry.created_at).toLocaleDateString()}</td>
-                                    <td>{entry.food_name}</td>
+                                    <td className="name-cell">
+                                        {entry.image_url && (
+                                            <img
+                                                src={`${entry.image_url}?tr=w-40,h-40,fo-auto`}
+                                                alt=""
+                                                className="row-thumb"
+                                                loading="lazy"
+                                            />
+                                        )}
+                                        {entry.food_name}
+                                    </td>
                                     <td>{entry.calories_per_unit}</td>
                                     <td className="capitalize">{entry.food_state}</td>
                                     <td>
@@ -266,7 +285,7 @@ const FoodEntry = () => {
                                                 className="quantity-input"
                                             />
                                         ) : (
-                                            entry.quantity
+                                            `${entry.quantity} ${unitFor(entry.food_state)}`.trim()
                                         )}
                                     </td>
                                     <td>
@@ -290,16 +309,16 @@ const FoodEntry = () => {
                     <p className="no-data">No entries saved yet.</p>
                 )}
 
-                {entries.length > 0 && (
+                {total > 0 && (
                     <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
-                        <button 
-                            disabled={currentPage === 1} 
+                        <button
+                            disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
                             style={{ padding: '8px 16px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
                         >
                             Previous
                         </button>
-                        <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1}</span>
+                        <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1} ({total} total)</span>
                         <button 
                             disabled={currentPage === totalPages || totalPages === 0} 
                             onClick={() => handlePageChange(currentPage + 1)}

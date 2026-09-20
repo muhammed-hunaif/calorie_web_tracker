@@ -93,3 +93,9 @@
   font-weight: 700;
   color: #333;
 }
+/* Day label under the dashboard heading */
+.dashboard-subtitle {
+  margin: 4px 0 0;
+  color: #777;
+  font-size: 0.95rem;
+}

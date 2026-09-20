@@ -1,23 +1,18 @@
 import { z } from 'zod';
+import { idSchema, MAX_QUANTITY } from './commonSchema.js';
+
+// z.number() in Zod 4 already rejects strings, NaN and Infinity, so
+// "abc" / -500 / 999999999 are all rejected with 400 before any SQL runs.
+const quantitySchema = z
+    .number('Quantity must be a number')
+    .positive('Quantity must be greater than 0')
+    .max(MAX_QUANTITY, `Quantity must not exceed ${MAX_QUANTITY}`);
 
 export const foodEntrySchema = z.object({
-  foodId: z.number({
-    required_error: 'Food ID is required',
-    invalid_type_error: 'Food ID must be a number',
-  })
-    .int()
-    .positive('Food ID must be a positive integer'),
-  quantity: z.number({
-    required_error: 'Quantity is required',
-    invalid_type_error: 'Quantity must be a number',
-  })
-    .positive('Quantity must be greater than 0'),
+    foodId: idSchema('Food ID'),
+    quantity: quantitySchema,
 });
 
 export const updateFoodEntrySchema = z.object({
-  quantity: z.number({
-    required_error: 'Quantity is required',
-    invalid_type_error: 'Quantity must be a number',
-  })
-    .positive('Quantity must be greater than 0'),
+    quantity: quantitySchema,
 });

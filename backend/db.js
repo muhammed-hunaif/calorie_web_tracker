@@ -45,7 +45,10 @@ pool.getConnection()
         food_name VARCHAR(255) NOT NULL,
         calories_per_unit FLOAT NOT NULL,
         food_state VARCHAR(50) NOT NULL,
+        image_url VARCHAR(500) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_food_master_user_name (user_id, food_name),
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `;
@@ -59,7 +62,10 @@ pool.getConnection()
         exercise_name VARCHAR(255) NOT NULL,
         unit VARCHAR(50) NOT NULL,
         calories_burned FLOAT NOT NULL,
+        image_url VARCHAR(500) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_exercise_master_user_name (user_id, exercise_name),
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `;
@@ -73,6 +79,8 @@ pool.getConnection()
         food_id INT NOT NULL,
         quantity FLOAT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_food_entries_user_created (user_id, created_at),
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY(food_id) REFERENCES food_master(id) ON DELETE CASCADE
       )
@@ -87,6 +95,8 @@ pool.getConnection()
         exercise_id INT NOT NULL,
         duration FLOAT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_exercise_entries_user_created (user_id, created_at),
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY(exercise_id) REFERENCES exercise_master(id) ON DELETE CASCADE
       )

@@ -4,19 +4,25 @@ export const getDashboard = async (req, res) => {
     const userId = req.user.id;
 
     try {
+        // Totals cover TODAY only, not all time. CURDATE() is evaluated by
+        // MySQL, so the day boundary matches the server clock that wrote
+        // created_at - comparing against a date computed in Node could land on
+        // a different day if the two run in different timezones.
         const [foodResult] = await pool.query(`
             SELECT SUM(fe.quantity * fm.calories_per_unit) AS totalConsumed
             FROM food_entries fe
             JOIN food_master fm ON fe.food_id = fm.id
-            WHERE fe.user_id = ?
+            WHERE fe.user_id = ? AND DATE(fe.created_at) = CURDATE()
         `, [userId]);
 
         const [exerciseResult] = await pool.query(`
             SELECT SUM(ee.duration * em.calories_burned) AS totalBurned
             FROM exercise_entries ee
             JOIN exercise_master em ON ee.exercise_id = em.id
-            WHERE ee.user_id = ?
+            WHERE ee.user_id = ? AND DATE(ee.created_at) = CURDATE()
         `, [userId]);
+
+        const [[{ today }]] = await pool.query('SELECT CURDATE() AS today');
 
         const consumed = foodResult[0].totalConsumed || 0;
         const burned = exerciseResult[0].totalBurned || 0;
@@ -25,7 +31,9 @@ export const getDashboard = async (req, res) => {
         res.json({
             consumed,
             burned,
-            netCalories
+            netCalories,
+            // The day these totals describe, so the UI can label it.
+            date: today instanceof Date ? today.toLocaleDateString('en-CA') : String(today)
         });
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -34,7 +42,8 @@ export const getDashboard = async (req, res) => {
 };
 
 export const getReportDetails = async (req, res) => {
-    const { date } = req.params;
+    // Validated as a real YYYY-MM-DD date by validateParams(dateParamSchema).
+    const { date } = req.validatedParams;
     const userId = req.user.id;
 
     try {

@@ -13,28 +13,36 @@ const Report = () => {
   const [fromDate, setFromDate] = useState(queryFromDate);
   const [toDate, setToDate] = useState(queryToDate);
   const [reports, setReports] = useState([]);
+  // Pagination is done by the API now; these come from the response envelope.
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const navigate = useNavigate();
 
-  const fetchReports = async (start, end) => {
+  const fetchReports = async (start, end, page) => {
     try {
-      const params = {};
+      // The server paginates over the distinct days that have activity and
+      // returns just this page, so the whole history is never sent.
+      const params = { page, limit };
       if (start && end) {
         params.fromDate = start;
         params.toDate = end;
       }
       const response = await api.get('/reports', { params });
-      setReports(response.data);
+      setReports(response.data.data);
+      setTotal(response.data.total);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error('Error fetching reports:', error);
-      alert('Failed to fetch reports.');
+      alert(error.response?.data?.message || 'Failed to fetch reports.');
     }
   };
 
   useEffect(() => {
     setFromDate(queryFromDate);
     setToDate(queryToDate);
-    fetchReports(queryFromDate, queryToDate);
-  }, [queryFromDate, queryToDate]);
+    // Refetch on filter or page change - the server returns that page.
+    fetchReports(queryFromDate, queryToDate, currentPage);
+  }, [queryFromDate, queryToDate, currentPage]);
 
   const handleSearch = () => {
     if ((fromDate && !toDate) || (!fromDate && toDate)) {
@@ -57,10 +65,6 @@ const Report = () => {
     }
     setSearchParams(params);
   };
-
-  const totalPages = Math.ceil(reports.length / limit);
-  const startIndex = (currentPage - 1) * limit;
-  const paginatedReports = reports.slice(startIndex, startIndex + limit);
 
   const handleViewDetails = (date) => {
     navigate(`/ReportView/${date}?fromDate=${queryFromDate}&toDate=${queryToDate}&page=${currentPage}`);
@@ -108,8 +112,8 @@ const Report = () => {
             </tr>
           </thead>
           <tbody>
-            {paginatedReports.length > 0 ? (
-              paginatedReports.map((report) => (
+            {reports.length > 0 ? (
+              reports.map((report) => (
                 <tr key={report.date}>
                   <td>{report.date}</td>
                   <td>{report.consumed}</td>
@@ -136,16 +140,16 @@ const Report = () => {
         </table>
       </div>
 
-      {reports.length > 0 && (
+      {total > 0 && (
         <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', gap: '10px' }}>
-          <button 
-            disabled={currentPage === 1} 
+          <button
+            disabled={currentPage === 1}
             onClick={() => handlePageChange(currentPage - 1)}
             style={{ padding: '8px 16px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
           >
             Previous
           </button>
-          <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1}</span>
+          <span style={{ padding: '8px' }}>Page {currentPage} of {totalPages || 1} ({total} days)</span>
           <button 
             disabled={currentPage === totalPages || totalPages === 0} 
             onClick={() => handlePageChange(currentPage + 1)}
