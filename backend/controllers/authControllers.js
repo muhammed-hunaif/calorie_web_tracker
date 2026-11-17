@@ -3,9 +3,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const cookieOptions = {
-  httpOnly: true, // prevents XSS(cross-site scripting)protects the cookie
-  sameSite: 'strict', // CSRF protection(Cross-Site Request Forgery)Other websites cannot send cookie
-  secure: process.env.NODE_ENV === 'production',// Cookie only sent over HTTPS
+  httpOnly: true, // prevents XSS (cross-site scripting) protects the cookie
+  sameSite: process.env.COOKIE_SAME_SITE || (process.env.NODE_ENV === 'production' ? 'none' : 'lax'),
+  secure: process.env.NODE_ENV === 'production', // Required when sameSite is 'none' over HTTPS
   path: '/',
 };
 
